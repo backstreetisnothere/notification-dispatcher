@@ -1,0 +1,39 @@
+framework:
+    messenger:
+        failure_transport: failed
+
+        transports:
+            notifications:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    auto_setup: true
+                    confirm_timeout: 5.0
+                    exchange:
+                        name: notifications
+                        type: direct
+                        default_publish_routing_key: notifications
+                    queues:
+                        notifications:
+                            binding_keys:
+                                - notifications
+                retry_strategy:
+                    max_retries: 5
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 64000
+
+            failed:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    auto_setup: true
+                    exchange:
+                        name: notifications_dlq
+                        type: direct
+                        default_publish_routing_key: notifications_dlq
+                    queues:
+                        notifications_dlq:
+                            binding_keys:
+                                - notifications_dlq
+
+        routing:
+            'App\Infrastructure\Messenger\NotificationRequested': notifications

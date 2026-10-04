@@ -1,0 +1,80 @@
+parameters:
+    outbox.lease_seconds: 30
+    outbox.max_attempts: 10
+    outbox.base_delay_ms: 1000
+    outbox.max_delay_ms: 300000
+    outbox.multiplier: 2
+    outbox.jitter: 0.2
+
+    circuit_breaker.failure_threshold: 3
+    circuit_breaker.recovery_seconds: 60
+    circuit_breaker.probe_lock_ms: 30000
+
+    deduplication.delivered_ttl_seconds: 2592000
+    deduplication.lock_ttl_ms: 120000
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            $clock: '@App\Shared\Clock'
+            $leaseSeconds: '%outbox.lease_seconds%'
+            $maxAttempts: '%outbox.max_attempts%'
+            $baseDelayMilliseconds: '%outbox.base_delay_ms%'
+            $maxDelayMilliseconds: '%outbox.max_delay_ms%'
+            $multiplier: '%outbox.multiplier%'
+            $jitterRatio: '%outbox.jitter%'
+            $failureThreshold: '%circuit_breaker.failure_threshold%'
+            $recoverySeconds: '%circuit_breaker.recovery_seconds%'
+            $probeLockMilliseconds: '%circuit_breaker.probe_lock_ms%'
+            $deliveredTtlSeconds: '%deduplication.delivered_ttl_seconds%'
+            $lockTtlMilliseconds: '%deduplication.lock_ttl_ms%'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    App\Shared\Clock:
+        alias: App\Shared\SystemClock
+
+    App\Outbox\OutboxStore:
+        alias: App\Outbox\DoctrineOutboxStore
+
+    App\Application\Notification\NotificationStatusStore:
+        alias: App\Infrastructure\Persistence\DoctrineNotificationStatusStore
+
+    App\Application\Notification\DeliveryDeduplicationStore:
+        alias: App\Infrastructure\Redis\RedisDeliveryDeduplicationStore
+
+    App\Resilience\CircuitBreaker\CircuitStateStore:
+        alias: App\Infrastructure\Redis\RedisCircuitStateStore
+
+    Redis:
+        class: Redis
+        factory: ['@App\Shared\RedisFactory', 'create']
+        arguments:
+            - '%env(REDIS_URL)%'
+
+    App\Infrastructure\Provider\NotificationProviderFactory:
+        arguments:
+            $mode: '%env(PROVIDER_MODE)%'
+            $emailUrl: '%env(PROVIDER_EMAIL_URL)%'
+            $smsUrl: '%env(PROVIDER_SMS_URL)%'
+            $pushUrl: '%env(PROVIDER_PUSH_URL)%'
+            $apiKey: '%env(PROVIDER_API_KEY)%'
+            $timeoutSeconds: '%env(float:PROVIDER_HTTP_TIMEOUT)%'
+
+    app.inner_notification_provider:
+        class: App\Domain\Provider\NotificationProvider
+        factory: ['@App\Infrastructure\Provider\NotificationProviderFactory', 'create']
+
+    App\Domain\Provider\NotificationProvider:
+        class: App\Infrastructure\Provider\CircuitBreakingNotificationProvider
+        arguments:
+            $inner: '@app.inner_notification_provider'

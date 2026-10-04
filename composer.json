@@ -1,0 +1,75 @@
+{
+    "name": "portfolio/notification-outbox-dispatcher",
+    "description": "Transactional Outbox notification dispatcher with RabbitMQ, Redis deduplication and Circuit Breaker",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.3",
+        "ext-amqp": "*",
+        "ext-ctype": "*",
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "ext-redis": "*",
+        "doctrine/dbal": "^3.8 || ^4.0",
+        "doctrine/doctrine-bundle": "^2.13",
+        "doctrine/doctrine-migrations-bundle": "^3.3",
+        "doctrine/orm": "^3.3",
+        "psr/log": "^3.0",
+        "symfony/amqp-messenger": "7.2.*",
+        "symfony/console": "7.2.*",
+        "symfony/dependency-injection": "7.2.*",
+        "symfony/dotenv": "7.2.*",
+        "symfony/framework-bundle": "7.2.*",
+        "symfony/http-client": "7.2.*",
+        "symfony/messenger": "7.2.*",
+        "symfony/monolog-bundle": "^3.10",
+        "symfony/property-access": "7.2.*",
+        "symfony/property-info": "7.2.*",
+        "symfony/runtime": "7.2.*",
+        "symfony/serializer": "7.2.*",
+        "symfony/uid": "7.2.*",
+        "symfony/yaml": "7.2.*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "symfony/browser-kit": "7.2.*",
+        "symfony/css-selector": "7.2.*",
+        "symfony/phpunit-bridge": "7.2.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": true,
+            "symfony/runtime": true
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "7.2.*"
+        }
+    },
+    "scripts": {
+        "lint:php": "find src tests migrations config public bin -type f -name '*.php' -print0 | xargs -0 -n1 php -l",
+        "test": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration",
+        "test:all": "phpunit"
+    },
+    "scripts-descriptions": {
+        "lint:php": "Run PHP syntax validation",
+        "test": "Run unit tests",
+        "test:integration": "Run Redis and provider integration tests",
+        "test:all": "Run all tests"
+    }
+}
